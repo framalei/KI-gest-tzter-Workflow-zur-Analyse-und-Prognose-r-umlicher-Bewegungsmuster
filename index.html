@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Workflow: Erfassung · Analyse · Prognose · Vergleich</title>
+
+  <style>
+@font-face{
+  font-family:"MyFont";
+  src:url("meineschrift.woff2") format("woff2");
+  font-weight:normal;
+  font-style:normal;
+}
+:root{
+  --bg:#fff; --panel:#f6f7f9; --card:#fff; --border:#e6e6e6;
+  --text:#111; --muted:#555; --muted2:#777;
+  --shadow:0 10px 30px rgba(0,0,0,.06); --r:14px;
+  --blue:#0033cc; --blue2:#1a4dff; --chip:#f2f4f7; --chipBorder:#e5e7eb;
+}
+*{ box-sizing:border-box; }
+body{ margin:0; background:var(--bg); color:var(--text); font-family:"MyFont",system-ui,-apple-system,"Segoe UI",sans-serif; }
+header{ position:sticky; top:0; z-index:10; background:var(--blue); border-bottom:1px solid rgba(0,0,0,.12); }
+header, header *{ color:#fff; }
+.topbar{ max-width:1600px; margin:0 auto; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.brand{ display:flex; align-items:center; gap:10px; min-width:280px; }
+.logoImg{ width:40px; height:40px; object-fit:contain; border-radius:999px; background:rgba(255,255,255,.95); padding:1px; border:1px solid rgba(255,255,255,.55); }
+.brand .title{ font-weight:800; letter-spacing:.2px; line-height:1.1; }
+.brand .sub{ font-size:12px; color:rgba(255,255,255,.85); margin-top:2px; }
+.globalActions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+
+main{ max-width:1600px; margin:0 auto; padding:14px 16px 22px; display:grid; grid-template-columns:1.05fr 1fr 1fr 1fr; gap:12px; }
+@media(max-width:1400px){ main{ grid-template-columns:1fr 1fr; } }
+@media(max-width:900px){ main{ grid-template-columns:1fr; } }
+
+.panel{ background:var(--panel); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden; display:flex; flex-direction:column; min-height:610px; }
+.panelHeader{
+  padding:12px 12px 10px; border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.35));
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.panelHeader .hgroup{ display:flex; flex-direction:column; gap:2px; }
+.panelHeader .h{ font-weight:850; letter-spacing:.2px; font-size:13px; text-transform:uppercase; }
+.panelHeader .p{ font-size:12px; color:var(--muted); line-height:1.25; }
+.panelBody{ padding:12px; display:flex; flex-direction:column; gap:10px; }
+.card{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:10px; }
+
+canvas{ width:100%; height:auto; background:#fff; border:1px solid #d8d8d8; border-radius:12px; display:block; box-shadow:0 6px 18px rgba(0,0,0,.06); }
+video{ display:none; }
+
+.toolbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.btn{
+  border:1px solid #cfcfcf; background:#fff; color:#111; border-radius:12px; padding:10px 12px;
+  font-weight:750; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:8px;
+  transition:transform .06s ease, background .12s ease, border-color .12s ease; user-select:none;
+}
+.btn:hover{ background:#f3f3f3; }
+.btn:active{ transform:translateY(1px); }
+.btn:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
+
+.btnPrimary{ background:var(--blue); color:#fff; border-color:var(--blue); }
+.btnPrimary:hover{ background:var(--blue2); border-color:var(--blue2); }
+.btnDark{ background:#111; color:#fff; border-color:#111; }
+.btnDark:hover{ background:#000; }
+.btnGhost{ background:#fff; border-color:#dadada; }
+.btnDanger{ background:#fff; border-color:#f1b3b3; color:#8a1f1f; }
+.btnDanger:hover{ background:#fff5f5; }
+
+input[type="text"], input[type="number"], select{
+  border:1px solid #cfcfcf; border-radius:12px; padding:10px 12px; font-size:13px; background:#fff; min-height:40px;
+}
+input[type="file"]{
+  border:1px dashed #cfcfcf; border-radius:12px; padding:8px 10px; background:#fff; min-height:40px; max-width:280px;
+}
+.row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.field{ display:flex; gap:6px; align-items:center; color:var(--muted); font-size:12px; background:var(--chip); border:1px solid var(--chipBorder); border-radius:999px; padding:6px 10px; }
+.field input{ width:84px; padding:8px 10px; border-radius:10px; border:1px solid #d6d6d6; background:#fff; color:#111; font-weight:700; }
+
+.status{ background:#fff; border:1px solid var(--border); border-radius:12px; padding:10px 12px; font-size:13px; color:#333; line-height:1.35; }
+.note{ font-size:12px; color:var(--muted2); line-height:1.35; padding:0 2px; }
+.sectionTitle{ font-size:12px; text-transform:uppercase; letter-spacing:.25px; color:#333; font-weight:850; margin:2px 2px 6px; }
+table{ width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+th, td{ padding:8px 10px; border-bottom:1px solid #eee; font-size:12px; text-align:left; vertical-align:top; }
+th{ background:#fafafa; font-weight:850; }
+tr:last-child td{ border-bottom:none; }
+.mono{ font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.21.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
+</head>
+
+<body>
+<header>
+  <div class="topbar">
+    <div class="brand">
+      <img class="logoImg" src="logo.jpg" alt="Logo" />
+      <div>
+        <div class="title">KI-GESTÜTZTER WORKFLOW ZUR ANALYSE UND PROGNOSE RÄUMLICHER BEWEGUNGSMUSTER</div>
+        <div class="sub">Erfassung → Analyse → Prognose → Vergleich</div>
+      </div>
+    </div>
+    <div class="globalActions">
+      <div class="sub">Neue Medien 3</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- Panel 1 -->
+  <section class="panel">
+    <div class="panelHeader">
+      <div class="hgroup">
+        <div class="h">Erfassung</div>
+        <div class="p">Videoquelle, Kalibrierung und Szenarioelemente</div>
+      </div>
+    </div>
+
+    <div class="panelBody">
+      <div class="card">
+        <div class="sectionTitle">Kamera / Video</div>
+        <video id="video" autoplay playsinline></video>
+        <canvas id="view"></canvas>
+
+        <div class="toolbar" style="margin-top:10px;">
+          <button id="startCam" class="btn btnPrimary">Start</button>
+          <button id="stop" class="btn btnDark">Stop</button>
+          <button id="reset" class="btn btnGhost">Reset</button>
+          <input id="file" type="file" accept="video/*" />
+        </div>
+
+        <div class="note" style="margin-top:8px;">
+          Tipp: Für Webcam nutze <span class="mono">http://localhost</span> oder <span class="mono">https://</span>.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle">Kalibrierung & Szenario</div>
+        <div class="toolbar">
+          <button id="calibBtn" class="btn">Kalibrieren</button>
+          <button id="clearCalib" class="btn btnGhost">Kalibrierung löschen</button>
+          <button id="setMag" class="btn">Magnet setzen</button>
+          <button id="setObs" class="btn">Hindernis setzen</button>
+          <button id="clearZones" class="btn btnGhost">Zonen löschen</button>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <span class="field">Raster W <input id="gridW" type="number" value="44" min="20" max="120" step="1" /></span>
+          <span class="field">Raster H <input id="gridH" type="number" value="28" min="15" max="80" step="1" /></span>
+          <span class="field">Detektion <input id="detEvery" type="number" value="3" min="1" max="10" step="1" /></span>
+          <span class="field">Score <input id="minScore" type="number" value="0.55" min="0.2" max="0.95" step="0.05" /></span>
+        </div>
+      </div>
+
+      <div id="status" class="status">Start: Kamera oder Video laden. Optional kalibrieren.</div>
+    </div>
+  </section>
+
+  <!-- Panel 2 -->
+  <section class="panel">
+    <div class="panelHeader">
+      <div class="hgroup">
+        <div class="h">Analyse</div>
+        <div class="p">Grundriss mit Linienpfaden (persistierend bis Reset)</div>
+      </div>
+    </div>
+
+    <div class="panelBody">
+      <div class="card">
+        <div class="sectionTitle">Laufpfade</div>
+        <canvas id="paths" width="640" height="420"></canvas>
+        <div class="note" style="margin-top:8px;">
+          Pfade werden <span class="mono">kumulativ</span> gezeichnet und erst bei Reset/Neustart gelöscht.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle">Export</div>
+        <div class="toolbar">
+          <button id="exportPaths" class="btn">Pfadbild PNG</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Panel 3 -->
+  <section class="panel">
+    <div class="panelHeader">
+      <div class="hgroup">
+        <div class="h">Prognose</div>
+        <div class="p">Pixelmap + Zonenlabels (25 Zonen)</div>
+      </div>
+    </div>
+
+    <div class="panelBody">
+      <div class="card">
+        <div class="sectionTitle">Prognosekarte</div>
+        <canvas id="pred" width="640" height="420"></canvas>
+
+        <div class="toolbar" style="margin-top:10px;">
+          <button id="runPred" class="btn btnPrimary" disabled>Prognose berechnen</button>
+          <input id="scenarioName" type="text" placeholder="Szenario-Name" style="flex:1; min-width:200px;" />
+          <button id="saveScenario" class="btn btnDark" disabled>Speichern</button>
+        </div>
+
+        <div class="toolbar" style="margin-top:10px;">
+          <button id="exportPred" class="btn">Prognose PNG</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Panel 4 -->
+  <section class="panel">
+    <div class="panelHeader">
+      <div class="hgroup">
+        <div class="h">Vergleich</div>
+        <div class="p">Differenzkarte + interpretierbare Kennzahlen</div>
+      </div>
+    </div>
+
+    <div class="panelBody">
+      <div class="card">
+        <div class="sectionTitle">Szenarien auswählen</div>
+        <div class="row">
+          <select id="selA" style="flex:1; min-width:200px;"></select>
+          <select id="selB" style="flex:1; min-width:200px;"></select>
+        </div>
+        <div class="toolbar" style="margin-top:10px;">
+          <button id="compareBtn" class="btn btnPrimary">Vergleichen</button>
+          <button id="clearStored" class="btn btnDanger">Gespeicherte löschen</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle">Differenzkarte</div>
+        <canvas id="diff" width="640" height="420"></canvas>
+        <div class="toolbar" style="margin-top:10px;">
+          <button id="exportDiff" class="btn">Differenz PNG</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle">Kennzahlen (Bedeutung für Raumplanung)</div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:30%;">Kennzahl</th>
+              <th style="width:18%;">A</th>
+              <th style="width:18%;">B</th>
+              <th style="width:14%;">Δ</th>
+              <th style="width:20%;">Interpretation</th>
+            </tr>
+          </thead>
+          <tbody id="cmpTable">
+            <tr>
+              <td><b>Aufnahmedauer</b><br /><span class="note">Zeitbasis der Daten</span></td>
+              <td class="mono">–</td><td class="mono">–</td><td class="mono">–</td>
+              <td class="note">Längere Dauer = stabilere Heatmap; kurze Messungen sind stärker zufallsanfällig.</td>
+            </tr>
+            <tr>
+              <td><b>Magnet aktiv</b><br /><span class="note">Anziehungs-/Zielpunkt im Raum</span></td>
+              <td class="mono">–</td><td class="mono">–</td><td class="mono">–</td>
+              <td class="note">Zeigt, ob ein definierter Zielpunkt (z.B. Theke/Attraktor) im Szenario wirkt.</td>
+            </tr>
+            <tr>
+              <td><b>Hindernis aktiv</b><br /><span class="note">Blockade / Umleitung</span></td>
+              <td class="mono">–</td><td class="mono">–</td><td class="mono">–</td>
+              <td class="note">Zeigt, ob ein Bereich gesperrt ist → Laufströme werden umgelenkt/bündeln sich.</td>
+            </tr>
+            <tr>
+              <td><b>Top-Zone</b><br /><span class="note">Hotspot (höchster Anteil)</span></td>
+              <td class="mono">–</td><td class="mono">–</td><td class="mono">–</td>
+              <td class="note">Wichtig für Platzierung: Engpässe, attraktive Bereiche, Wartezonen, Interaktionspunkte.</td>
+            </tr>
+            <tr>
+              <td><b>Top-Anteil</b><br /><span class="note">Intensität des Hotspots</span></td>
+              <td class="mono">–</td><td class="mono">–</td><td class="mono">–</td>
+              <td class="note">Je höher, desto stärker konzentriert sich Bewegung → potenzieller Stau/Übernutzung.</td>
+            </tr>
+            <tr>
+              <td><b>Unterschied gesamt (L1)</b><br /><span class="note">Ähnlichkeit der Verteilungen</span></td>
+              <td class="mono">–</td><td class="mono">–</td><td class="mono">–</td>
+              <td class="note">0% = identisch. Höher = Laufströme verlagern sich deutlich → Layoutwirkung sichtbar.</td>
+            </tr>
+            <tr>
+              <td><b>Übereinstimmung (Overlap)</b><br /><span class="note">gemeinsame Nutzung</span></td>
+              <td class="mono">–</td><td class="mono">–</td><td class="mono">–</td>
+              <td class="note">Hoher Overlap = gleiche Zonen werden genutzt; niedrig = Nutzung wandert (z.B. durch Möbel).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------------------------
+  // DOM
+  // ---------------------------
+  const $ = (id) => document.getElementById(id);
+
+  const statusEl = $("status");
+  const video = $("video");
+
+  const view = $("view");
+  const vctx = view.getContext("2d");
+
+  const pathsCanvas = $("paths");
+  const pth = pathsCanvas.getContext("2d");
+
+  const pred = $("pred");
+  const pctx = pred.getContext("2d");
+
+  const diff = $("diff");
+  const dctx = diff.getContext("2d");
+
+  const startCamBtn = $("startCam");
+  const fileInp = $("file");
+  const stopBtn = $("stop");
+  const resetBtn = $("reset");
+
+  const calibBtn = $("calibBtn");
+  const clearCalibBtn = $("clearCalib");
+  const setObsBtn = $("setObs");
+  const setMagBtn = $("setMag");
+  const clearZonesBtn = $("clearZones");
+
+  const runPredBtn = $("runPred");
+  const saveScenarioBtn = $("saveScenario");
+  const scenarioNameInp = $("scenarioName");
+
+  const exportPathsBtn = $("exportPaths");
+  const exportPredBtn = $("exportPred");
+  const exportDiffBtn = $("exportDiff");
+
+  const gridWInp = $("gridW");
+  const gridHInp = $("gridH");
+  const detEveryInp = $("detEvery");
+  const minScoreInp = $("minScore");
+
+  const selA = $("selA");
+  const selB = $("selB");
+  const compareBtn = $("compareBtn");
+  const clearStoredBtn = $("clearStored");
+  const cmpTable = $("cmpTable");
+
+  // ---------------------------
+  // Helpers
+  // ---------------------------
+  const setStatus = (t) => { statusEl.textContent = t; };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const nowMs = () => performance.now();
+
+  const dist = (a, b) => {
+    const dx = a.x - b.x, dy = a.y - b.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const colorForId = (id) => {
+    const hue = (id * 137.508) % 360;
+    return `hsl(${hue} 75% 40%)`;
+  };
+
+  const roundRect = (ctx, x, y, w, h, r) => {
+    const radius = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.arcTo(x + w, y, x + w, y + h, radius);
+    ctx.arcTo(x + w, y + h, x, y + h, radius);
+    ctx.arcTo(x, y + h, x, y, radius);
+    ctx.arcTo(x, y, x + w, y, radius);
+    ctx.closePath();
+  };
+
+  // ---------------------------
+  // State
+  // ---------------------------
+  let model = null;
+  let running = false;
+  let stream = null;
+  let frame = 0;
+
+  let GRID_W = Number(gridWInp.value || 44);
+  let GRID_H = Number(gridHInp.value || 28);
+
+  let heatGrid = new Float32Array(GRID_W * GRID_H);
+  let heatProb = new Float32Array(GRID_W * GRID_H);
+  let predProb = new Float32Array(GRID_W * GRID_H);
+
+  let nextId = 1;
+  let tracks = {}; // id -> {cx,cy,vx,vy,lastSeenFrame,missed,pathTopdown,lastDrawnIdx}
+
+  let DETECT_EVERY = Number(detEveryInp.value || 3);
+  let MIN_SCORE = Number(minScoreInp.value || 0.55);
+
+  // Zones / scenario elements
+  let mode = null;
+  let magnetImg = null;
+  let magnetTop = null;
+  let obstacleImgPts = [];
+  let obstacleTopPts = null;
+
+  // Calibration
+  let calibPoints = [];
+  let H = null;
+
+  // Prediction gating
+  let hasPrediction = false;
+  let runStartTs = null;
+  const minSecondsForPrediction = 45;
+
+  // Region grid for labels
+  const ZONES_X = 5, ZONES_Y = 5;
+
+  // Storage
+  const STORAGE_KEY = "scenario_store_v1";
+  let scenarioStore = loadStore();
+
+  // Persistent path layer
+  let pathsInitialized = false;
+
+  // ---------------------------
+  // Sizing
+  // ---------------------------
+  function ensureSizes() {
+    const W = video.videoWidth || 640;
+    const Hh = video.videoHeight || 480;
+    view.width = W; view.height = Hh;
+  }
+
+  // ---------------------------
+  // Homography
+  // ---------------------------
+  function gaussSolve(A, b) {
+    const n = b.length;
+    const M = A.map((row, i) => row.concat([b[i]]));
+    for (let col = 0; col < n; col++) {
+      let pivot = col;
+      for (let r = col + 1; r < n; r++) {
+        if (Math.abs(M[r][col]) > Math.abs(M[pivot][col])) pivot = r;
+      }
+      if (Math.abs(M[pivot][col]) < 1e-10) return null;
+      if (pivot !== col) { const t = M[col]; M[col] = M[pivot]; M[pivot] = t; }
+      const div = M[col][col];
+      for (let c = col; c <= n; c++) M[col][c] /= div;
+      for (let r = 0; r < n; r++) {
+        if (r === col) continue;
+        const f = M[r][col];
+        for (let c = col; c <= n; c++) M[r][c] -= f * M[col][c];
+      }
+    }
+    return Array.from({ length: n }, (_, i) => M[i][n]);
+  }
+
+  function solveHomography4pts(srcPts, dstPts) {
+    const A = [], b = [];
+    for (let i = 0; i < 4; i++) {
+      const x = srcPts[i].x, y = srcPts[i].y;
+      const u = dstPts[i].x, v = dstPts[i].y;
+      A.push([x, y, 1, 0, 0, 0, -u * x, -u * y]); b.push(u);
+      A.push([0, 0, 0, x, y, 1, -v * x, -v * y]); b.push(v);
+    }
+    const sol = gaussSolve(A, b);
+    if (!sol) return null;
+    return [
+      [sol[0], sol[1], sol[2]],
+      [sol[3], sol[4], sol[5]],
+      [sol[6], sol[7], 1]
+    ];
+  }
+
+  function applyHomography(H, x, y) {
+    const a = H[0][0] * x + H[0][1] * y + H[0][2];
+    const b = H[1][0] * x + H[1][1] * y + H[1][2];
+    const c = H[2][0] * x + H[2][1] * y + H[2][2];
+    if (Math.abs(c) < 1e-9) return null;
+    return { x: a / c, y: b / c };
+  }
+
+  function imageToTopdown(px, py) {
+    if (H) {
+      const q = applyHomography(H, px, py);
+      if (!q) return null;
+      return { x: clamp(q.x, 0, 1), y: clamp(q.y, 0, 1) };
+    }
+    return { x: clamp(px / view.width, 0, 1), y: clamp(py / view.height, 0, 1) };
+  }
+
+  function topdownToGrid(tx, ty) {
+    const gx = Math.floor(clamp(tx * GRID_W, 0, GRID_W - 1));
+    const gy = Math.floor(clamp(ty * GRID_H, 0, GRID_H - 1));
+    return { gx, gy };
+  }
+
+  function gridCenterTopdown(gx, gy) {
+    return { x: (gx + 0.5) / GRID_W, y: (gy + 0.5) / GRID_H };
+  }
+
+  // ---------------------------
+  // Geometry
+  // ---------------------------
+  function pointInPoly(pt, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i].x, yi = poly[i].y;
+      const xj = poly[j].x, yj = poly[j].y;
+      const intersect = ((yi > pt.y) !== (yj > pt.y)) &&
+        (pt.x < (xj - xi) * (pt.y - yi) / ((yj - yi) || 1e-12) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  // ---------------------------
+  // Interaction
+  // ---------------------------
+  function canvasPoint(clientX, clientY) {
+    const rect = view.getBoundingClientRect();
+    const x = (clientX - rect.left) * (view.width / rect.width);
+    const y = (clientY - rect.top) * (view.height / rect.height);
+    return { x, y };
+  }
+
+  function finalizeCalibration() {
+    const dst = [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }];
+    const HH = solveHomography4pts(calibPoints, dst);
+    if (!HH) {
+      setStatus("Kalibrierung fehlgeschlagen. Bitte erneut versuchen.");
+      calibPoints = []; H = null; mode = null;
+      return;
+    }
+    H = HH;
+    mode = null;
+    setStatus("Kalibrierung aktiv. Top-Down Projektion ist korrigiert.");
+    redrawPathsBaseLayer();
+  }
+
+  view.addEventListener("mousedown", (e) => {
+    const p = canvasPoint(e.clientX, e.clientY);
+
+    if (mode === "calib") {
+      if (calibPoints.length < 4) {
+        calibPoints.push(p);
+        setStatus(`Kalibrierung: Punkt ${calibPoints.length}/4 gesetzt.`);
+        if (calibPoints.length === 4) finalizeCalibration();
+      }
+      return;
+    }
+
+    if (mode === "mag") {
+      magnetImg = p;
+      magnetTop = imageToTopdown(p.x, p.y);
+      mode = null;
+      setStatus("Magnet gesetzt (Punkt).");
+      return;
+    }
+
+    if (mode === "obs") {
+      obstacleImgPts.push(p);
+      setStatus(`Hindernis: Punkt ${obstacleImgPts.length} gesetzt. (Doppelklick = schließen, Rechtsklick = undo)`);
+    }
+  });
+
+  view.addEventListener("dblclick", (e) => {
+    if (mode !== "obs") return;
+    e.preventDefault();
+    if (obstacleImgPts.length < 3) { setStatus("Hindernis: Mindestens 3 Punkte nötig."); return; }
+    const top = obstacleImgPts.map(pt => imageToTopdown(pt.x, pt.y)).filter(Boolean);
+    if (top.length < 3) { setStatus("Hindernis: Mapping fehlgeschlagen (Kalibrierung prüfen)."); return; }
+    obstacleTopPts = top;
+    mode = null;
+    setStatus("Hindernis gesetzt (Polygon).");
+    redrawPathsBaseLayer();
+  });
+
+  view.addEventListener("contextmenu", (e) => {
+    if (mode !== "obs") return;
+    e.preventDefault();
+    obstacleImgPts.pop();
+    setStatus(`Hindernis: Punkt entfernt. (${obstacleImgPts.length} Punkte)`);
+  });
+
+  // ---------------------------
+  // Overlays
+  // ---------------------------
+  function drawOverlayOnView() {
+    vctx.save();
+    vctx.lineWidth = 3;
+    vctx.strokeStyle = "#111";
+    vctx.fillStyle = "rgba(255,255,255,0.9)";
+    vctx.font = "14px system-ui";
+
+    // calibration points
+    for (let i = 0; i < calibPoints.length; i++) {
+      const p = calibPoints[i];
+      vctx.beginPath(); vctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+      vctx.fill(); vctx.stroke();
+      vctx.fillStyle = "#111";
+      vctx.fillText(String(i + 1), p.x + 10, p.y - 10);
+      vctx.fillStyle = "rgba(255,255,255,0.9)";
+    }
+
+    // magnet marker
+    if (magnetImg) {
+      vctx.save();
+      vctx.setLineDash([10, 8]);
+      vctx.beginPath(); vctx.arc(magnetImg.x, magnetImg.y, 10, 0, Math.PI * 2); vctx.stroke();
+      vctx.setLineDash([]);
+      vctx.fillStyle = "rgba(255,255,255,0.92)";
+      vctx.beginPath(); vctx.arc(magnetImg.x, magnetImg.y, 4, 0, Math.PI * 2); vctx.fill();
+      vctx.fillStyle = "#111";
+      vctx.fillText("MAGNET", magnetImg.x + 14, magnetImg.y - 12);
+      vctx.restore();
+    }
+
+    // obstacle poly (draft while editing or final)
+    const poly = obstacleImgPts.length ? obstacleImgPts : [];
+    if (poly.length) {
+      vctx.save();
+      vctx.setLineDash([10, 8]);
+      vctx.beginPath();
+      for (let i = 0; i < poly.length; i++) (i === 0 ? vctx.moveTo(poly[i].x, poly[i].y) : vctx.lineTo(poly[i].x, poly[i].y));
+      if (mode !== "obs" && poly.length >= 3) vctx.closePath();
+      vctx.stroke();
+      vctx.setLineDash([]);
+
+      vctx.fillStyle = "rgba(255,255,255,0.92)";
+      for (const pt of poly) {
+        vctx.beginPath(); vctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+        vctx.fill(); vctx.stroke();
+      }
+      if (poly[0]) {
+        vctx.fillStyle = "#111";
+        vctx.fillText("HINDERNIS", poly[0].x + 14, poly[0].y - 12);
+      }
+      vctx.restore();
+    }
+
+    vctx.restore();
+  }
+
+  function drawZonesOnTopdown(ctx, W, Hh, zonesOverride = null) {
+    const obs = zonesOverride?.obstacleTopPts ?? obstacleTopPts;
+    const mag = zonesOverride?.magnetTop ?? magnetTop;
+
+    ctx.save();
+    ctx.strokeStyle = "#111";
+    ctx.lineWidth = 2.2;
+
+    if (obs && obs.length >= 3) {
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      for (let i = 0; i < obs.length; i++) {
+        const p = obs[i];
+        const px = p.x * W, py = (1 - p.y) * Hh;
+        (i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py));
+      }
+      ctx.closePath(); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    if (mag) {
+      const px = mag.x * W, py = (1 - mag.y) * Hh;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath(); ctx.arc(px, py, 8, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI * 2); ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  // ---------------------------
+  // Persistent paths layer
+  // ---------------------------
+  function clearPathsLayer() {
+    pathsInitialized = false;
+    pth.clearRect(0, 0, pathsCanvas.width, pathsCanvas.height);
+    pth.fillStyle = "#fff";
+    pth.fillRect(0, 0, pathsCanvas.width, pathsCanvas.height);
+    for (const idStr of Object.keys(tracks)) tracks[Number(idStr)].lastDrawnIdx = 0;
+  }
+
+  function redrawPathsBaseLayer() {
+    const W = pathsCanvas.width, Hh = pathsCanvas.height;
+
+    pth.clearRect(0, 0, W, Hh);
+    pth.fillStyle = "#fff";
+    pth.fillRect(0, 0, W, Hh);
+
+    pth.globalAlpha = 0.12;
+    pth.strokeStyle = "#777";
+    pth.lineWidth = 1;
+    for (let i = 0; i <= 10; i++) {
+      const x = (i / 10) * W, y = (i / 10) * Hh;
+      pth.beginPath(); pth.moveTo(x, 0); pth.lineTo(x, Hh); pth.stroke();
+      pth.beginPath(); pth.moveTo(0, y); pth.lineTo(W, y); pth.stroke();
+    }
+    pth.globalAlpha = 1;
+
+    drawZonesOnTopdown(pth, W, Hh);
+
+    pathsInitialized = true;
+
+    // replay existing tracks if any
+    for (const idStr of Object.keys(tracks)) {
+      const id = Number(idStr);
+      tracks[id].lastDrawnIdx = 0;
+      drawTrackSegments(id, true);
+    }
+  }
+
+  function drawTrackSegments(id, full = false) {
+    const tr = tracks[id];
+    if (!tr?.pathTopdown || tr.pathTopdown.length < 2) return;
+
+    const W = pathsCanvas.width, Hh = pathsCanvas.height;
+    if (tr.lastDrawnIdx == null) tr.lastDrawnIdx = 0;
+
+    const startIdx = full ? 1 : Math.max(1, tr.lastDrawnIdx);
+    const endIdx = tr.pathTopdown.length - 1;
+    if (endIdx < startIdx) return;
+
+    pth.save();
+    pth.lineWidth = 2.6;
+    pth.strokeStyle = colorForId(id);
+
+    pth.beginPath();
+    const p0 = tr.pathTopdown[startIdx - 1];
+    pth.moveTo(p0.x * W, (1 - p0.y) * Hh);
+    for (let i = startIdx; i <= endIdx; i++) {
+      const p = tr.pathTopdown[i];
+      pth.lineTo(p.x * W, (1 - p.y) * Hh);
+    }
+    pth.stroke();
+
+    const last = tr.pathTopdown[endIdx];
+    pth.fillStyle = "#fff";
+    pth.strokeStyle = colorForId(id);
+    pth.beginPath();
+    pth.arc(last.x * W, (1 - last.y) * Hh, 4.5, 0, Math.PI * 2);
+    pth.fill(); pth.stroke();
+    pth.restore();
+
+    tr.lastDrawnIdx = tr.pathTopdown.length - 1;
+  }
+
+  function renderPathsHUD() {
+    const W = pathsCanvas.width, Hh = pathsCanvas.height;
+    const secs = runStartTs ? Math.floor((nowMs() - runStartTs) / 1000) : 0;
+
+    pth.save();
+    pth.fillStyle = "rgba(255,255,255,0.86)";
+    pth.strokeStyle = "rgba(0,0,0,0.25)";
+    pth.lineWidth = 1;
+    roundRect(pth, 10, 10, 230, 42, 12);
+    pth.fill(); pth.stroke();
+
+    pth.fillStyle = "#111";
+    pth.font = "12px system-ui";
+    pth.fillText(`Laufzeit: ${secs}s`, 20, 28);
+    pth.fillText(`Prognose ab: ${minSecondsForPrediction}s`, 20, 44);
+    pth.restore();
+  }
+
+  function renderPathsIncremental() {
+    if (!pathsInitialized) redrawPathsBaseLayer();
+
+    for (const idStr of Object.keys(tracks)) drawTrackSegments(Number(idStr), false);
+
+    // refresh HUD area to avoid smearing
+    pth.save();
+    pth.clearRect(0, 0, 260, 70);
+    pth.fillStyle = "#fff";
+    pth.fillRect(0, 0, 260, 70);
+
+    const W = pathsCanvas.width, Hh = pathsCanvas.height;
+    pth.globalAlpha = 0.12;
+    pth.strokeStyle = "#777";
+    pth.lineWidth = 1;
+
+    for (let i = 0; i <= 10; i++) {
+      const x = (i / 10) * W;
+      if (x <= 260) { pth.beginPath(); pth.moveTo(x, 0); pth.lineTo(x, 70); pth.stroke(); }
+    }
+    for (let i = 0; i <= 10; i++) {
+      const y = (i / 10) * Hh;
+      if (y <= 70) { pth.beginPath(); pth.moveTo(0, y); pth.lineTo(260, y); pth.stroke(); }
+    }
+    pth.globalAlpha = 1;
+
+    drawZonesOnTopdown(pth, W, Hh);
+    pth.restore();
+
+    renderPathsHUD();
+  }
+
+  // ---------------------------
+  // Tracking
+  // ---------------------------
+  function predictTrackPos(tr) {
+    return { x: tr.cx + tr.vx, y: tr.cy + tr.vy };
+  }
+
+  function matchTracks(dets) {
+    const detAssigned = new Array(dets.length).fill(null);
+    const ids = Object.keys(tracks).map(Number);
+    const used = new Set();
+
+    for (let i = 0; i < dets.length; i++) {
+      const d = dets[i];
+      let bestId = null, bestScore = 1e18;
+
+      for (const id of ids) {
+        if (used.has(id)) continue;
+
+        const tr = tracks[id];
+        const age = tr.missed || 0;
+
+        const pred = predictTrackPos(tr);
+        const dd = dist({ x: d.cx, y: d.cy }, pred);
+
+        const speed = Math.sqrt(tr.vx * tr.vx + tr.vy * tr.vy);
+        const baseGate = 70;
+        const gate = baseGate + speed * 2.2 - age * 3.0;
+        const gateClamped = clamp(gate, 45, 140);
+
+        if (dd > gateClamped) continue;
+
+        const score = dd + age * 4.0;
+        if (score < bestScore) { bestScore = score; bestId = id; }
+      }
+
+      if (bestId !== null) {
+        detAssigned[i] = bestId;
+        used.add(bestId);
+      }
+    }
+    return detAssigned;
+  }
+
+  function updateTracks(dets) {
+    const assigned = matchTracks(dets);
+
+    for (const idStr of Object.keys(tracks)) tracks[Number(idStr)].missed += 1;
+
+    for (let i = 0; i < dets.length; i++) {
+      const d = dets[i];
+      let id = assigned[i];
+
+      if (id === null) {
+        id = nextId++;
+        tracks[id] = { cx: d.cx, cy: d.cy, vx: 0, vy: 0, lastSeenFrame: frame, missed: 0, pathTopdown: [], lastDrawnIdx: 0 };
+      } else {
+        const tr = tracks[id];
+        const nx = d.cx, ny = d.cy;
+        const dx = nx - tr.cx, dy = ny - tr.cy;
+
+        tr.vx = 0.55 * tr.vx + 0.45 * dx;
+        tr.vy = 0.55 * tr.vy + 0.45 * dy;
+
+        tr.cx = 0.35 * nx + 0.65 * tr.cx;
+        tr.cy = 0.35 * ny + 0.65 * tr.cy;
+
+        tr.lastSeenFrame = frame;
+        tr.missed = 0;
+      }
+
+      const q = imageToTopdown(tracks[id].cx, tracks[id].cy);
+      if (q) {
+        tracks[id].pathTopdown.push({ x: q.x, y: q.y });
+        if (tracks[id].pathTopdown.length > 1600) tracks[id].pathTopdown.shift();
+
+        const { gx, gy } = topdownToGrid(q.x, q.y);
+        heatGrid[gy * GRID_W + gx] += 1;
+      }
+    }
+
+    for (const idStr of Object.keys(tracks)) {
+      const id = Number(idStr);
+      if (tracks[id].missed > 65) delete tracks[id];
+    }
+  }
+
+  function normalizeHeat() {
+    let sum = 0;
+    for (let i = 0; i < heatGrid.length; i++) sum += heatGrid[i];
+    if (sum <= 0) { heatProb.fill(0); return; }
+    for (let i = 0; i < heatGrid.length; i++) heatProb[i] = heatGrid[i] / sum;
+  }
+
+  // ---------------------------
+  // Prediction
+  // ---------------------------
+  function computePredictionFromHeat() {
+    normalizeHeat();
+
+    const MAG_STRENGTH = 1.8;
+    const MAG_SIGMA_CELLS = 6;
+    const OBSTACLE_FACTOR = 0.0;
+
+    let magGX = null, magGY = null;
+    if (magnetTop) {
+      magGX = Math.floor(clamp(magnetTop.x * GRID_W, 0, GRID_W - 1));
+      magGY = Math.floor(clamp(magnetTop.y * GRID_H, 0, GRID_H - 1));
+    }
+
+    const raw = new Float32Array(GRID_W * GRID_H);
+    let sum = 0;
+
+    for (let gy = 0; gy < GRID_H; gy++) {
+      for (let gx = 0; gx < GRID_W; gx++) {
+        const idx = gy * GRID_W + gx;
+        let v = heatProb[idx];
+        if (v === 0) v = 1e-6;
+
+        if (obstacleTopPts && obstacleTopPts.length >= 3) {
+          const c = gridCenterTopdown(gx, gy);
+          if (pointInPoly(c, obstacleTopPts)) v *= OBSTACLE_FACTOR;
+        }
+
+        if (magGX !== null) {
+          const dx = gx - magGX, dy = gy - magGY;
+          const d2 = dx * dx + dy * dy;
+          const sigma2 = MAG_SIGMA_CELLS * MAG_SIGMA_CELLS;
+          const gauss = Math.exp(-d2 / (2 * sigma2));
+          v *= (1 + (MAG_STRENGTH - 1) * gauss);
+        }
+
+        raw[idx] = v; sum += v;
+      }
+    }
+
+    if (sum <= 0) { predProb.fill(0); return; }
+    for (let i = 0; i < raw.length; i++) predProb[i] = raw[i] / sum;
+
+    hasPrediction = true;
+  }
+
+  function renderPixelGrid(ctx, W, Hh, probGrid, contrast = 220) {
+    ctx.clearRect(0, 0, W, Hh);
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, Hh);
+
+    let max = 0;
+    for (let i = 0; i < probGrid.length; i++) if (probGrid[i] > max) max = probGrid[i];
+
+    const cw = W / GRID_W, ch = Hh / GRID_H;
+    for (let gy = 0; gy < GRID_H; gy++) {
+      for (let gx = 0; gx < GRID_W; gx++) {
+        const idx = gy * GRID_W + gx;
+        const v = probGrid[idx] / (max || 1);
+        const shade = 255 - Math.floor(v * contrast);
+        ctx.fillStyle = `rgb(${shade},${shade},${shade})`;
+        ctx.fillRect(gx * cw, (GRID_H - 1 - gy) * ch, cw, ch);
+      }
+    }
+
+    ctx.globalAlpha = 0.16;
+    ctx.strokeStyle = "#999";
+    for (let i = 0; i <= GRID_W; i++) { const x = i * cw; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, Hh); ctx.stroke(); }
+    for (let j = 0; j <= GRID_H; j++) { const y = j * ch; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+  }
+
+  function computeRegionPercents(probGrid, zonesX, zonesY) {
+    const out = Array.from({ length: zonesY }, () => Array(zonesX).fill(0));
+    for (let gy = 0; gy < GRID_H; gy++) {
+      for (let gx = 0; gx < GRID_W; gx++) {
+        const idx = gy * GRID_W + gx;
+        const p = probGrid[idx];
+        const rx = Math.min(zonesX - 1, Math.floor(gx / (GRID_W / zonesX)));
+        const ry = Math.min(zonesY - 1, Math.floor(gy / (GRID_H / zonesY)));
+        out[ry][rx] += p;
+      }
+    }
+    for (let ry = 0; ry < zonesY; ry++) for (let rx = 0; rx < zonesX; rx++) out[ry][rx] *= 100;
+    return out;
+  }
+
+  function colorForPercent(p) {
+    if (p >= 8) return "#b00020";
+    if (p >= 4) return "#e67e00";
+    if (p >= 2) return "#d4b000";
+    return "#1b7f2a";
+  }
+
+  function drawPercentLabelsOnPredictionGrid(reg, zonesX, zonesY) {
+    const W = pred.width, Hh = pred.height;
+    const cellW = W / zonesX, cellH = Hh / zonesY;
+
+    pctx.save();
+    pctx.globalAlpha = 0.28;
+    pctx.strokeStyle = "#111";
+    pctx.lineWidth = 1.6;
+    for (let i = 1; i < zonesX; i++) { pctx.beginPath(); pctx.moveTo(i * cellW, 0); pctx.lineTo(i * cellW, Hh); pctx.stroke(); }
+    for (let j = 1; j < zonesY; j++) { pctx.beginPath(); pctx.moveTo(0, j * cellH); pctx.lineTo(W, j * cellH); pctx.stroke(); }
+    pctx.restore();
+
+    pctx.save();
+    pctx.textAlign = "center";
+    pctx.textBaseline = "middle";
+    pctx.font = "10px system-ui";
+
+    for (let ry = 0; ry < zonesY; ry++) {
+      for (let rx = 0; rx < zonesX; rx++) {
+        const val = reg[(zonesY - 1) - ry][rx];
+        const txt = `${val.toFixed(1)}%`;
+        const cx = rx * cellW + cellW / 2;
+        const cy = ry * cellH + cellH / 2;
+
+        const tw = pctx.measureText(txt).width;
+        const bw = tw + 12, bh = 16;
+
+        const col = colorForPercent(val);
+
+        pctx.fillStyle = col;
+        pctx.globalAlpha = 0.72;
+        roundRect(pctx, cx - bw / 2, cy - bh / 2, bw, bh, 7);
+        pctx.fill();
+
+        pctx.globalAlpha = 0.9;
+        pctx.strokeStyle = "rgba(0,0,0,0.30)";
+        pctx.lineWidth = 1;
+        roundRect(pctx, cx - bw / 2, cy - bh / 2, bw, bh, 7);
+        pctx.stroke();
+
+        pctx.globalAlpha = 1;
+        pctx.fillStyle = "#fff";
+        pctx.fillText(txt, cx, cy);
+      }
+    }
+    pctx.restore();
+  }
+
+  function renderPrediction() {
+    renderPixelGrid(pctx, pred.width, pred.height, predProb, 220);
+    drawZonesOnTopdown(pctx, pred.width, pred.height);
+    const reg = computeRegionPercents(predProb, ZONES_X, ZONES_Y);
+    drawPercentLabelsOnPredictionGrid(reg, ZONES_X, ZONES_Y);
+  }
+
+  // ---------------------------
+  // Compare / Diff
+  // ---------------------------
+  function topZoneInfo(region, zonesX, zonesY) {
+    let best = { ry: 0, rx: 0, val: -1 };
+    for (let ry = 0; ry < zonesY; ry++) {
+      for (let rx = 0; rx < zonesX; rx++) {
+        const v = region[ry][rx];
+        if (v > best.val) best = { ry, rx, val: v };
+      }
+    }
+    return { label: `Z${best.ry + 1}-${best.rx + 1}`, val: best.val };
+  }
+
+  function l1Distance(pA, pB) {
+    let s = 0;
+    for (let i = 0; i < pA.length; i++) s += Math.abs(pA[i] - pB[i]);
+    return s;
+  }
+
+  function overlapScore(pA, pB) {
+    let s = 0;
+    for (let i = 0; i < pA.length; i++) s += Math.min(pA[i], pB[i]);
+    return s;
+  }
+
+  function drawScenarioZonesOnCanvas(ctx, W, Hh, zones, style) {
+    if (!zones) return;
+
+    ctx.save();
+    ctx.strokeStyle = style.strokeStyle || "#111";
+    ctx.lineWidth = style.lineWidth || 2.4;
+    if (style.dash) ctx.setLineDash(style.dash);
+
+    if (zones.obstacleTopPts && zones.obstacleTopPts.length >= 3) {
+      ctx.beginPath();
+      for (let i = 0; i < zones.obstacleTopPts.length; i++) {
+        const p = zones.obstacleTopPts[i];
+        const px = p.x * W;
+        const py = (1 - p.y) * Hh;
+        (i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py));
+      }
+      ctx.closePath();
+      ctx.stroke();
+    }
+
+    if (zones.magnetTop) {
+      const px = zones.magnetTop.x * W;
+      const py = (1 - zones.magnetTop.y) * Hh;
+      ctx.beginPath(); ctx.arc(px, py, 8, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.90)";
+      ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI * 2); ctx.fill();
+    }
+
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  function renderDiffMap(predA, predB, zonesA = null, zonesB = null) {
+    dctx.clearRect(0, 0, diff.width, diff.height);
+    dctx.fillStyle = "#fff"; dctx.fillRect(0, 0, diff.width, diff.height);
+
+    const W = diff.width, Hh = diff.height;
+    const cw = W / GRID_W, ch = Hh / GRID_H;
+
+    let maxAbs = 0;
+    for (let i = 0; i < predA.length; i++) {
+      const av = Math.abs(predA[i] - predB[i]);
+      if (av > maxAbs) maxAbs = av;
+    }
+    if (maxAbs < 1e-12) maxAbs = 1e-12;
+
+    for (let gy = 0; gy < GRID_H; gy++) {
+      for (let gx = 0; gx < GRID_W; gx++) {
+        const idx = gy * GRID_W + gx;
+        const dv = (predA[idx] - predB[idx]) / maxAbs;
+        const a = clamp(Math.abs(dv), 0, 1);
+
+        const base = 245 - Math.round(a * 140);
+        let r = base, g = base, b = base;
+        if (dv > 0) r = 255 - Math.round((1 - a) * 40);
+        else if (dv < 0) b = 255 - Math.round((1 - a) * 40);
+
+        dctx.fillStyle = `rgb(${r},${g},${b})`;
+        dctx.fillRect(gx * cw, (GRID_H - 1 - gy) * ch, cw, ch);
+      }
+    }
+
+    dctx.globalAlpha = 0.14;
+    dctx.strokeStyle = "#666";
+    for (let i = 0; i <= GRID_W; i++) { const x = i * cw; dctx.beginPath(); dctx.moveTo(x, 0); dctx.lineTo(x, Hh); dctx.stroke(); }
+    for (let j = 0; j <= GRID_H; j++) { const y = j * ch; dctx.beginPath(); dctx.moveTo(0, y); dctx.lineTo(W, y); dctx.stroke(); }
+    dctx.globalAlpha = 1;
+
+    if (zonesA) drawScenarioZonesOnCanvas(dctx, W, Hh, zonesA, { strokeStyle: "#111", lineWidth: 2.6, dash: null });
+    if (zonesB) drawScenarioZonesOnCanvas(dctx, W, Hh, zonesB, { strokeStyle: "#111", lineWidth: 2.6, dash: [8, 6] });
+
+    dctx.save();
+    dctx.fillStyle = "rgba(255,255,255,0.88)";
+    dctx.strokeStyle = "rgba(0,0,0,0.22)";
+    dctx.lineWidth = 1;
+    roundRect(dctx, 10, Hh - 56, 260, 46, 12);
+    dctx.fill(); dctx.stroke();
+    dctx.font = "12px system-ui";
+    dctx.fillStyle = "#111";
+    dctx.fillText("Rot = A stärker · Blau = B stärker · Grau = ähnlich", 20, Hh - 34);
+    dctx.fillText("Zonen: A solid · B gestrichelt", 20, Hh - 18);
+    dctx.restore();
+  }
+
+  function setCmpRow(rowIdx, a, b, d) {
+    const row = cmpTable.children[rowIdx];
+    if (!row) return;
+    row.children[1].textContent = a;
+    row.children[2].textContent = b;
+    row.children[3].textContent = d;
+  }
+
+  function compareSelected() {
+    if (scenarioStore.length < 2) { setStatus("Bitte mindestens zwei Szenarien speichern, um vergleichen zu können."); return; }
+    const A = scenarioById(selA.value);
+    const B = scenarioById(selB.value);
+    if (!A || !B) { setStatus("Bitte gültige Szenarien auswählen."); return; }
+    if (A.gridW !== B.gridW || A.gridH !== B.gridH) {
+      setStatus("Szenarien haben unterschiedliche Rastergrößen. Bitte mit gleicher Rastergröße aufzeichnen.");
+      return;
+    }
+
+    GRID_W = A.gridW; GRID_H = A.gridH;
+    gridWInp.value = String(GRID_W);
+    gridHInp.value = String(GRID_H);
+
+    const regA = computeRegionPercents(A.pred, ZONES_X, ZONES_Y);
+    const regB = computeRegionPercents(B.pred, ZONES_X, ZONES_Y);
+
+    const topA = topZoneInfo(regA, ZONES_X, ZONES_Y);
+    const topB = topZoneInfo(regB, ZONES_X, ZONES_Y);
+
+    const l1 = l1Distance(A.pred, B.pred);
+    const l1Pct = (l1 / 2) * 100;
+    const ov = overlapScore(A.pred, B.pred) * 100;
+
+    setCmpRow(0, `${A.durationSec}s`, `${B.durationSec}s`, `${(A.durationSec - B.durationSec)}s`);
+    setCmpRow(1, A.zones?.hasMagnet ? "ja" : "nein", B.zones?.hasMagnet ? "ja" : "nein", "–");
+    setCmpRow(2, A.zones?.hasObstacle ? "ja" : "nein", B.zones?.hasObstacle ? "ja" : "nein", "–");
+    setCmpRow(3, topA.label, topB.label, topA.label === topB.label ? "gleich" : "verschieden");
+    setCmpRow(4, `${topA.val.toFixed(1)}%`, `${topB.val.toFixed(1)}%`, `${(topA.val - topB.val).toFixed(1)}%`);
+    setCmpRow(5, "–", "–", `${l1Pct.toFixed(1)}%`);
+    setCmpRow(6, "–", "–", `${ov.toFixed(1)}%`);
+
+    renderDiffMap(A.pred, B.pred, A.zones || null, B.zones || null);
+    setStatus(`Vergleich erstellt: "${A.name}" vs "${B.name}".`);
+  }
+
+  // ---------------------------
+  // Storage
+  // ---------------------------
+  function loadStore() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch { return []; }
+  }
+
+  function saveStore() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(scenarioStore));
+  }
+
+  function refreshScenarioSelects() {
+    const options = scenarioStore.map(s => ({ id: s.id, name: s.name }));
+    const fill = (sel) => {
+      sel.innerHTML = "";
+      for (const o of options) {
+        const opt = document.createElement("option");
+        opt.value = o.id;
+        opt.textContent = o.name;
+        sel.appendChild(opt);
+      }
+    };
+    fill(selA); fill(selB);
+  }
+
+  function scenarioById(id) {
+    return scenarioStore.find(s => s.id === id) || null;
+  }
+
+  function uuid() {
+    return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
+  }
+
+  function snapshotZones() {
+    return {
+      hasMagnet: !!magnetTop,
+      hasObstacle: !!(obstacleTopPts && obstacleTopPts.length >= 3),
+      magnetTop: magnetTop ? { x: magnetTop.x, y: magnetTop.y } : null,
+      obstacleTopPts: (obstacleTopPts && obstacleTopPts.length >= 3)
+        ? obstacleTopPts.map(p => ({ x: p.x, y: p.y }))
+        : null
+    };
+  }
+
+  function saveCurrentScenario() {
+    if (!hasPrediction) { setStatus("Bitte zuerst Prognose berechnen, dann Szenario speichern."); return; }
+
+    const name = (scenarioNameInp.value || "").trim() || `Szenario ${scenarioStore.length + 1}`;
+    const secs = runStartTs ? Math.floor((nowMs() - runStartTs) / 1000) : 0;
+
+    scenarioStore.push({
+      id: uuid(),
+      name,
+      createdAt: new Date().toISOString(),
+      durationSec: secs,
+      gridW: GRID_W,
+      gridH: GRID_H,
+      zones: snapshotZones(),
+      pred: Array.from(predProb)
+    });
+
+    saveStore();
+    refreshScenarioSelects();
+    setStatus(`Gespeichert: "${name}" (${secs}s).`);
+  }
+
+  // ---------------------------
+  // Export
+  // ---------------------------
+  function downloadPNG(canvas, name) {
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = name; a.click();
+      URL.revokeObjectURL(url);
+    }, "image/png");
+  }
+
+  // ---------------------------
+  // Model / camera / video
+  // ---------------------------
+  async function loadModel() {
+    setStatus("Lade Modell…");
+    await tf.ready();
+    await tf.setBackend("webgl").catch(() => {});
+    model = await cocoSsd.load({ base: "lite_mobilenet_v2" });
+    setStatus("Modell bereit.");
+  }
+
+  function stopAll() {
+    running = false;
+    video.pause();
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  }
+
+  async function startCamera() {
+    if (!model) await loadModel();
+    setStatus("Starte Kamera…");
+
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+    video.srcObject = stream;
+    await new Promise(res => video.onloadedmetadata = res);
+    await video.play();
+
+    ensureSizes();
+    running = true;
+    frame = 0;
+    runStartTs = nowMs();
+    hasPrediction = false;
+    saveScenarioBtn.disabled = true;
+
+    clearPathsLayer();
+    loop();
+
+    setStatus("Kamera läuft. Laufpfade werden kumulativ gezeichnet. Prognose erst nach 45s möglich.");
+  }
+
+  async function startVideoFile(f) {
+    if (!model) await loadModel();
+    stopAll();
+    setStatus("Lade Video…");
+
+    const url = URL.createObjectURL(f);
+    video.srcObject = null;
+    video.src = url;
+    video.loop = true;
+
+    await video.play();
+    ensureSizes();
+
+    running = true;
+    frame = 0;
+    runStartTs = nowMs();
+    hasPrediction = false;
+    saveScenarioBtn.disabled = true;
+
+    clearPathsLayer();
+    loop();
+
+    setStatus("Video läuft. Laufpfade werden kumulativ gezeichnet. Prognose erst nach 45s möglich.");
+  }
+
+  // ---------------------------
+  // Main loop
+  // ---------------------------
+  async function loop() {
+    if (!running) return;
+    frame++;
+
+    vctx.drawImage(video, 0, 0, view.width, view.height);
+
+    if (model && (frame % DETECT_EVERY === 0)) {
+      const preds = await model.detect(video);
+      const people = preds
+        .filter(p => p.class === "person" && p.score >= MIN_SCORE)
+        .map(p => {
+          const [x, y, w, h] = p.bbox;
+          return { cx: x + w / 2, cy: y + h / 2 };
+        });
+
+      if (people.length > 0) {
+        updateTracks(people);
+      } else {
+        for (const idStr of Object.keys(tracks)) {
+          const id = Number(idStr);
+          const tr = tracks[id];
+          tr.missed += 1;
+          if (tr.missed > 65) delete tracks[id];
+          else { tr.cx += tr.vx * 0.4; tr.cy += tr.vy * 0.4; }
+        }
+      }
+
+      renderPathsIncremental();
+      updatePredictButtonState();
+    } else {
+      renderPathsIncremental();
+      updatePredictButtonState();
+    }
+
+    drawOverlayOnView();
+    requestAnimationFrame(loop);
+  }
+
+  function updatePredictButtonState() {
+    if (!runStartTs) {
+      runPredBtn.disabled = true;
+      saveScenarioBtn.disabled = true;
+      return;
+    }
+    const secs = (nowMs() - runStartTs) / 1000;
+    runPredBtn.disabled = secs < minSecondsForPrediction;
+    saveScenarioBtn.disabled = !hasPrediction;
+    if (secs < minSecondsForPrediction) {
+      setStatus(`Erfassung läuft (${Math.floor(secs)}s). Prognose erst ab ${minSecondsForPrediction}s möglich.`);
+    }
+  }
+
+  // ---------------------------
+  // UI wiring
+  // ---------------------------
+  startCamBtn.onclick = async () => {
+    try { await startCamera(); }
+    catch (e) { console.error(e); setStatus("Fehler: " + (e.message || e)); }
+  };
+
+  fileInp.onchange = async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    try { await startVideoFile(f); }
+    catch (err) { console.error(err); setStatus("Fehler: " + (err.message || err)); }
+  };
+
+  stopBtn.onclick = () => { stopAll(); setStatus("Gestoppt."); };
+
+  function reinitGrid() {
+    GRID_W = Number(gridWInp.value || 44);
+    GRID_H = Number(gridHInp.value || 28);
+    heatGrid = new Float32Array(GRID_W * GRID_H);
+    heatProb = new Float32Array(GRID_W * GRID_H);
+    predProb = new Float32Array(GRID_W * GRID_H);
+    tracks = {}; nextId = 1;
+    hasPrediction = false;
+
+    setStatus("Raster geändert. Bitte neu aufzeichnen.");
+    runPredBtn.disabled = true;
+    saveScenarioBtn.disabled = true;
+
+    clearPathsLayer();
+  }
+
+  gridWInp.onchange = reinitGrid;
+  gridHInp.onchange = reinitGrid;
+
+  detEveryInp.onchange = () => { DETECT_EVERY = Number(detEveryInp.value || 3); };
+  minScoreInp.onchange = () => { MIN_SCORE = Number(minScoreInp.value || 0.55); };
+
+  resetBtn.onclick = () => {
+    stopAll();
+
+    frame = 0; tracks = {}; nextId = 1;
+
+    GRID_W = Number(gridWInp.value || 44);
+    GRID_H = Number(gridHInp.value || 28);
+    heatGrid = new Float32Array(GRID_W * GRID_H);
+    heatProb = new Float32Array(GRID_W * GRID_H);
+    predProb = new Float32Array(GRID_W * GRID_H);
+
+    obstacleImgPts = []; obstacleTopPts = null;
+    magnetImg = null; magnetTop = null;
+    mode = null;
+    calibPoints = []; H = null;
+
+    hasPrediction = false;
+    runStartTs = null;
+
+    runPredBtn.disabled = true;
+    saveScenarioBtn.disabled = true;
+
+    clearPathsLayer();
+
+    pctx.clearRect(0, 0, pred.width, pred.height);
+    pctx.fillStyle = "#fff"; pctx.fillRect(0, 0, pred.width, pred.height);
+
+    dctx.clearRect(0, 0, diff.width, diff.height);
+    dctx.fillStyle = "#fff"; dctx.fillRect(0, 0, diff.width, diff.height);
+
+    setStatus("Reset. Starte Kamera/Video neu.");
+  };
+
+  calibBtn.onclick = () => {
+    calibPoints = []; H = null; mode = "calib";
+    setStatus("Kalibrierung: 4 Bodenpunkte klicken (TL→TR→BR→BL).");
+  };
+
+  clearCalibBtn.onclick = () => {
+    calibPoints = []; H = null; mode = null;
+    setStatus("Kalibrierung gelöscht.");
+    redrawPathsBaseLayer();
+  };
+
+  setMagBtn.onclick = () => { mode = "mag"; setStatus("Magnet: Punkt klicken."); };
+
+  setObsBtn.onclick = () => {
+    mode = "obs";
+    obstacleImgPts = []; obstacleTopPts = null;
+    setStatus("Hindernis: Punkte klicken (mind. 3). Doppelklick = schließen, Rechtsklick = undo.");
+  };
+
+  clearZonesBtn.onclick = () => {
+    obstacleImgPts = []; obstacleTopPts = null;
+    magnetImg = null; magnetTop = null;
+    setStatus("Zonen gelöscht.");
+    redrawPathsBaseLayer();
+  };
+
+  runPredBtn.onclick = () => {
+    if (!runStartTs) { setStatus("Bitte erst Kamera/Video starten."); return; }
+    const secs = (nowMs() - runStartTs) / 1000;
+    if (secs < minSecondsForPrediction) {
+      setStatus(`Zu kurz: ${Math.floor(secs)}s. Prognose erst ab ${minSecondsForPrediction}s.`);
+      return;
+    }
+    setStatus("Berechne Prognose…");
+    computePredictionFromHeat();
+    renderPrediction();
+    saveScenarioBtn.disabled = false;
+    setStatus("Prognose fertig. Du kannst speichern oder vergleichen.");
+  };
+
+  saveScenarioBtn.onclick = saveCurrentScenario;
+
+  exportPathsBtn.onclick = () => downloadPNG(pathsCanvas, "laufpfade_topdown.png");
+  exportPredBtn.onclick = () => downloadPNG(pred, "prognose_pixelmap.png");
+  exportDiffBtn.onclick = () => downloadPNG(diff, "differenzkarte.png");
+
+  compareBtn.onclick = compareSelected;
+
+  clearStoredBtn.onclick = () => {
+    if (!confirm("Alle gespeicherten Szenarien löschen?")) return;
+    scenarioStore = [];
+    saveStore();
+    refreshScenarioSelects();
+
+    dctx.clearRect(0, 0, diff.width, diff.height);
+    dctx.fillStyle = "#fff"; dctx.fillRect(0, 0, diff.width, diff.height);
+
+    setStatus("Gespeicherte Szenarien gelöscht.");
+  };
+
+  // init
+  refreshScenarioSelects();
+  setStatus("Start: Kamera oder Video laden. Optional kalibrieren. Laufpfade bleiben bis Reset/Neustart sichtbar.");
+  clearPathsLayer();
+  redrawPathsBaseLayer();
+})();
+</script>
+</body>
+</html>
